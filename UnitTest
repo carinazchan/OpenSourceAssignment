@@ -3,3 +3,4 @@
 Unit Test:
 
 When running the application ensure that the display pops up, usually on the desktop, and the buttons are clickable.
+Also, ensure that the logic of the game is functioning and winners and losers are decided.
