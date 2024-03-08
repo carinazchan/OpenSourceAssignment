@@ -55,7 +55,7 @@ class TicTacToeGame:
     def process_move(self, move):
          row, col = move.row, move.col
          self._current_moves[row][col] = move
-         for combo in self._get_winning_combos:
+         for combo in self._get_winning_combos():
               results = set(
                    self._current_moves[n][m].label 
                    for n, m in combo
