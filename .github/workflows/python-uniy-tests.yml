@@ -1,0 +1,33 @@
+name: Python Unit Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run unit tests
+      run: |
+        python -m unittest unit_tests.py
+
+    - name: Check if tests failed
+      if: ${{ failure() }}
+      run: |
+        echo "::error::Unit tests failed. Please fix them before merging."
+        exit 1
