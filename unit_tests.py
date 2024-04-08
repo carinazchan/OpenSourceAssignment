@@ -3,9 +3,13 @@ from unittest.mock import MagicMock
 from tkinter import Tk
 from tic_tac_toe import TicTacToeGame, TicTacToeBoard, Player, Move
 
+
 class TestTicTacToe(unittest.TestCase):
     def setUp(self):
-        self.players = (Player(label="X", color="blue"), Player(label="O", color="green"))
+        self.players = (
+            Player(label="X", color="blue"),
+            Player(label="O", color="green")
+        )
         self.game = TicTacToeGame(players=self.players)
 
     def test_initialization(self):
@@ -36,11 +40,12 @@ class TestTicTacToe(unittest.TestCase):
         self.assertFalse(self.game.is_tied())
         self.assertEqual(self.game.current_player, self.players[0])
 
+
 class TestTicTacToeBoard(unittest.TestCase):
     def setUp(self):
         self.game_mock = MagicMock(spec=TicTacToeGame)
-        self.game_mock.board_size = 3  # Adding board_size attribute to the mock
-        self.game_mock.current_player = Player(label="X", color="blue")  # Adding current_player attribute to the mock
+        self.game_mock.board_size = 3
+        self.game_mock.current_player = Player(label="X", color="blue")
         self.board = TicTacToeBoard(self.game_mock)
 
     def test_initialization(self):
@@ -55,11 +60,11 @@ class TestTicTacToeBoard(unittest.TestCase):
             fg=self.board._game.current_player.color
         )
 
-
     def test_update_display(self):
         self.board._update_display("Test Message", "red")
         self.assertEqual(self.board.display["text"], "Test Message")
         self.assertEqual(self.board.display["fg"], "red")
+
 
 if __name__ == '__main__':
     unittest.main()
