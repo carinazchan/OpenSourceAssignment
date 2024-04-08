@@ -11,6 +11,12 @@ class TestTicTacToe(unittest.TestCase):
         )
         self.game = TicTacToeGame(players=self.players)
 
+    def test_initialization(self):
+        self.assertEqual(self.game.board_size, 3)
+        self.assertEqual(self.game.current_player, self.players[0])
+        self.assertFalse(self.game.has_winner())
+        self.assertFalse(self.game.is_tied())
+
     def test_valid_move(self):
         move = Move(row=0, col=0)
         self.assertTrue(self.game.is_valid_move(move))
@@ -41,13 +47,13 @@ class TestTicTacToeBoard(unittest.TestCase):
         self.game_mock.current_player = Player(label="X", color="blue")
         self.board = TicTacToeBoard(self.game_mock)
 
-    def test_initialization(self):
-        with patch('tkinter.Tk', MagicMock()), \
-             patch('tkinter.Label', MagicMock()), \
-             patch('tkinter.Button', MagicMock()):
-            self.board = TicTacToeBoard(self.game_mock)
-            self.assertIsInstance(self.board, TicTacToeBoard)
-            self.assertIsNotNone(self.board.display)
+    def test_update_button(self):
+        with patch('tkinter.Button') as button_mock:
+            self.board._update_button(button_mock)
+            button_mock.config.assert_called_once_with(
+                text=self.board._game.current_player.label,
+                fg=self.board._game.current_player.color
+            )
 
 
 def test_update_display(self):
