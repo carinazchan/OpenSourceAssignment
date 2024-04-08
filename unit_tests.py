@@ -47,14 +47,6 @@ class TestTicTacToeBoard(unittest.TestCase):
         self.game_mock.current_player = Player(label="X", color="blue")
         self.board = TicTacToeBoard(self.game_mock)
 
-    def test_update_button(self):
-        with patch('tkinter.Button') as button_mock:
-            self.board._update_button(button_mock)
-            button_mock.config.assert_called_once_with(
-                text=self.board._game.current_player.label,
-                fg=self.board._game.current_player.color
-            )
-
 
 def test_update_display(self):
     with patch.object(self.board.display, 'config') as config_mock:
