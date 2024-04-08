@@ -1,2 +1,1 @@
-package1==1.0.0
-package2>=2.0.0,<3.0.0
+package1==24.0
