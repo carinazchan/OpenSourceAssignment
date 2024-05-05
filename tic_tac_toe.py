@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import font
 from itertools import cycle
 from typing import NamedTuple
+import random
+import sys
 
 
 # Create a player class for the two different players
@@ -18,10 +20,7 @@ class Move(NamedTuple):
 
 
 BOARD_SIZE = 3
-DEFAULT_PLAYERS = (
-    Player(label="X", color="black"),
-    Player(label="O", color="red")
-)
+DEFAULT_PLAYERS = (Player(label="X", color="black"), Player(label="O", color="red"))
 
 
 class TicTacToeGame:
@@ -34,6 +33,7 @@ class TicTacToeGame:
         self._has_winner = False
         self._winning_combos = []
         self._setup_board()
+        self.play_mode = ""
 
     def _setup_board(self):
         self._current_moves = [
@@ -43,10 +43,7 @@ class TicTacToeGame:
         self._winning_combos = self._get_winning_combos()
 
     def _get_winning_combos(self):
-        rows = [
-            [(move.row, move.col) for move in row]
-            for row in self._current_moves
-        ]
+        rows = [[(move.row, move.col) for move in row] for row in self._current_moves]
         columns = [list(col) for col in zip(*rows)]
         first_diagonal = [row[i] for i, row in enumerate(rows)]
         second_diagonal = [col[j] for j, col in enumerate(reversed(columns))]
@@ -78,9 +75,7 @@ class TicTacToeGame:
     def is_tied(self):
         """Return True if the game is tied, and False otherwise."""
         no_winner = not self._has_winner
-        played_moves = (
-            move.label for row in self._current_moves for move in row
-        )
+        played_moves = (move.label for row in self._current_moves for move in row)
         return no_winner and all(played_moves)
 
     def toggle_player(self):
@@ -95,39 +90,45 @@ class TicTacToeGame:
         self._has_winner = False
         self.winner_combo = []
 
+    # Check if the current mode is the computer player
+    # Author: @carinazchan
+    def is_computer_player(self):
+        """Return True if the current player is the computer player."""
+        return self.current_player.label == "O"
+
+    # Get a random move for the computer player
+    # Author: @carinazchan
+    def get_computer_move(self):
+        """Return a random move for the computer player."""
+        row = random.randint(0, self.board_size - 1)
+        col = random.randint(0, self.board_size - 1)
+
+        while not self.is_valid_move(Move(row, col, self.current_player.label)): # While the move is not valid, will search for open cell
+            row = random.randint(0, self.board_size - 1)
+            col = random.randint(0, self.board_size - 1)
+
+        computer_move = Move(row, col, self.current_player.label)
+
+        return computer_move
+
+
 
 class TicTacToeBoard(tk.Tk):
-
     def __init__(self, game):
         super().__init__()
         self.title("Tic Tac Toe Game")
         self._cells = {}
         self._game = game
-        self._create_menu()
         self._create_board_display()
         self._create_board_grid()
         self._create_restart_button()
-
-    def _create_menu(self):
-        menu_bar = tk.Menu(master=self)
-        self.config(menu=menu_bar)
-        file_menu = tk.Menu(master=menu_bar)
-        file_menu.add_command(
-            label="Play Again",
-            command=self.reset_board
-        )
-        file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=quit)
-        menu_bar.add_cascade(label="File", menu=file_menu)
 
     # Create the displayed board
     def _create_board_display(self):
         display_frame = tk.Frame(master=self)
         display_frame.pack(fill=tk.X)
         self.display = tk.Label(
-            master=display_frame,
-            text="Ready?",
-            font=font.Font(size=28, weight="bold")
+            master=display_frame, text="Ready?", font=font.Font(size=28, weight="bold")
         )
         self.display.pack()
 
@@ -150,27 +151,36 @@ class TicTacToeBoard(tk.Tk):
                 )
                 self._cells[button] = (row, col)
                 button.bind("<ButtonPress-1>", self.play)
-                button.grid(
-                    row=row,
-                    column=col,
-                    padx=5,
-                    pady=5,
-                    sticky="nsew"
-                )
+                button.grid(row=row, column=col, padx=5, pady=5, sticky="nsew")
+
+    # Two player game mode
+    # Author: @carinazchan
+    def _start_two_player_game(self):
+        self._game = TicTacToeGame(
+            players=(Player(label="X", color="black"), Player(label="O", color="red"))
+        )
+        self.reset_board()
+
+    # Computer player game mode
+    # Author: @carinazchan
+    def _start_cpu_player_game(self):
+        self._game = TicTacToeGame(
+            players=(Player(label="X", color="black"), Player(label="O", color="blue"))
+        )
+        self.reset_board()
 
     # Create a restart button
     def _create_restart_button(self):
         restart_button = tk.Button(
-            master=self,
-            text="Restart Game",
-            command=self.reset_board
+            master=self, text="Restart Game", command=self.reset_board
         )
         restart_button.pack()
 
     # method to update clicked buttons
     def _update_button(self, clicked_btn):
-        clicked_btn.config(text=self._game.current_player.label,
-                           fg=self._game.current_player.color)
+        clicked_btn.config(
+            text=self._game.current_player.label, fg=self._game.current_player.color
+        )
 
     # method to update display once a button has been clicked
     def _update_display(self, msg, color="black"):
@@ -184,23 +194,53 @@ class TicTacToeBoard(tk.Tk):
 
     # method to handle a players move
     def play(self, event):
-        clicked_btn = event.widget
-        row, col = self._cells[clicked_btn]
-        move = Move(row, col, self._game.current_player.label)
-        if self._game.is_valid_move(move):
-            self._update_button(clicked_btn)
-            self._game.process_move(move)
-            if self._game.has_winner():
-                self._highlight_cells()
-                msg = f'Player "{self._game.current_player.label}" won!'
-                color = self._game.current_player.color
-                self._update_display(msg, color)
-            elif self._game.is_tied():
-                self._update_display(msg="Tied game!", color="red")
-            else:
-                self._game.toggle_player()
-                msg = f"{self._game.current_player.label}'s turn"
+        # Check if the current mode is the computer player
+        # Author: @carinazchan
+        if self._game.play_mode == "_start_cpu_player_game":
+            clicked_btn = event.widget
+            row, col = self._cells[clicked_btn]
+            move = Move(row, col, self._game.current_player.label)
+            if self._game.is_valid_move(move):
+                self._update_button(clicked_btn)
+                self._game.process_move(move)
+                if self._game.has_winner():
+                    self._highlight_cells()
+                    msg = f'Player "{self._game.current_player.label}" won!'
+                    color = self._game.current_player.color
+                    self._update_display(msg, color)
+                elif self._game.is_tied():
+                    self._update_display(msg="Tied game!", color="red")
+                else:
+                    self._game.toggle_player()
+                    computer_move = self._game.get_computer_move()
+                    self._game.process_move(computer_move)
+                    self._update_button(
+                        next(
+                            btn
+                            for btn, (r, c) in self._cells.items()
+                            if r == computer_move.row and c == computer_move.col
+                        )
+                    )
+                    self._game.toggle_player()
+        elif self._game.play_mode == "_start_two_player_game":
+            clicked_btn = event.widget
+            row, col = self._cells[clicked_btn]
+            move = Move(row, col, self._game.current_player.label)
+            if self._game.is_valid_move(move):
+                self._update_button(clicked_btn)
+                self._game.process_move(move)
+                if self._game.has_winner():
+                    self._highlight_cells()
+                    msg = f'Player "{self._game.current_player.label}" won!'
+                    color = self._game.current_player.color
+                    self._update_display(msg, color)
+                elif self._game.is_tied():
+                    self._update_display(msg="Tied game!", color="red")
+                else:
+                    self._game.toggle_player()
+                    msg = f"{self._game.current_player.label}'s turn"
                 self._update_display(msg)
+
 
     def reset_board(self):
         """Reset the game's board to play again."""
@@ -214,7 +254,27 @@ class TicTacToeBoard(tk.Tk):
 
 # main method for game/board creation
 def main():
-    game = TicTacToeGame()
+    option = input(
+        """Welcome to Tic Tac Toe! Please input an option and press enter:
+          1 = Two Player Game
+          2 = Computer Player Game
+          """
+    )
+
+    if option == "1":
+        game = TicTacToeGame(
+            players=(Player(label="X", color="black"), Player(label="O", color="red"))
+        )
+        game.play_mode = "_start_two_player_game"
+    elif option == "2":
+        game = TicTacToeGame(
+            players=(Player(label="X", color="black"), Player(label="O", color="blue"))
+        )
+        game.play_mode = "_start_cpu_player_game"
+    else:
+        print("Invalid option. Please start over.")
+        sys.exit()
+
     board = TicTacToeBoard(game)
     board.mainloop()
 
